@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { z, ZodError } from "zod";
-import { AppError } from "../utils/errors";
+import { AppError, LockedOutError } from "../utils/errors";
 
 export function errorHandler(
   err: unknown,
@@ -14,6 +14,11 @@ export function errorHandler(
       error: "Validation failed",
       details: flattened.fieldErrors,
     });
+  }
+
+  if (err instanceof LockedOutError) {
+    res.set("Retry-After", String(err.retryAfterSeconds));
+    return res.status(err.statusCode).json({ error: err.message });
   }
 
   if (err instanceof AppError) {

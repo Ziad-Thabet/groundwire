@@ -7,6 +7,7 @@ import workspaceRoutes from "./routes/workspace.routes";
 import { errorHandler } from "./middleware/errorHandler";
 
 const app = express();
+app.set("trust proxy", 1);
 
 app.use(cors({ origin: env.CORS_ORIGIN, credentials: true }));
 app.use(express.json());

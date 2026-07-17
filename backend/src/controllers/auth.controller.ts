@@ -41,7 +41,7 @@ export async function signup(req: Request, res: Response, next: NextFunction) {
 export async function login(req: Request, res: Response, next: NextFunction) {
   try {
     const input = loginSchema.parse(req.body);
-    const result = await authService.login(input);
+    const result = await authService.login(input, req.ip ?? "unknown");
 
     setRefreshCookie(res, result.refreshToken);
 
