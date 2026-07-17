@@ -1,12 +1,24 @@
 import { prisma } from "../config/prisma";
-import { createUser, findUserByEmail } from "../repositories/user.repository";
+import {
+  createUser,
+  findUserByEmail,
+  setPasswordResetToken,
+  findUserByResetTokenHash,
+  resetUserPassword,
+} from "../repositories/user.repository";
 import { storeRefreshToken } from "../repositories/refreshToken.repository";
 import { hashPassword, verifyPassword } from "../utils/password";
 import { normalizeEmail } from "../utils/email";
 import { signAccessToken } from "../utils/jwt";
 import { generateRefreshToken, hashRefreshToken } from "../utils/refreshToken";
+import {
+  generatePasswordResetToken,
+  hashPasswordResetToken,
+  getPasswordResetExpiry,
+} from "../utils/passwordReset";
 import { ConflictError, UnauthorizedError } from "../utils/errors";
 import { SignupInput, LoginInput } from "../domain/schemas/auth.schema";
+import { emailProvider } from "../config/emailProvider";
 import { env } from "../env";
 
 async function issueTokens(userId: string) {
@@ -77,4 +89,46 @@ export async function login(input: LoginInput) {
     ...tokens,
     user: { id: user.id, email: user.email, name: user.name },
   };
+}
+
+export async function requestPasswordReset(email: string): Promise<void> {
+  const normalizedEmail = normalizeEmail(email);
+  const user = await findUserByEmail(normalizedEmail);
+
+  if (!user || user.deletedAt) {
+    return;
+  }
+
+  const rawToken = generatePasswordResetToken();
+  const tokenHash = hashPasswordResetToken(rawToken);
+  const expiresAt = getPasswordResetExpiry();
+
+  await setPasswordResetToken(user.id, tokenHash, expiresAt);
+
+  const resetUrl = `${env.FRONTEND_URL}/reset-password?token=${rawToken}`;
+
+  await emailProvider.sendPasswordResetEmail({
+    to: user.email,
+    resetUrl,
+    expiresInMinutes: 60,
+  });
+}
+
+export async function resetPassword(
+  token: string,
+  newPassword: string,
+): Promise<void> {
+  const tokenHash = hashPasswordResetToken(token);
+  const user = await findUserByResetTokenHash(tokenHash);
+
+  if (
+    !user ||
+    !user.passwordResetExpiresAt ||
+    user.passwordResetExpiresAt < new Date()
+  ) {
+    throw new UnauthorizedError("Invalid or expired reset token");
+  }
+
+  const passwordHash = await hashPassword(newPassword);
+  await resetUserPassword(user.id, passwordHash);
 }
