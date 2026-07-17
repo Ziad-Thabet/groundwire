@@ -1,5 +1,10 @@
 import { Request, Response, NextFunction } from "express";
-import { signupSchema, loginSchema } from "../domain/schemas/auth.schema";
+import {
+  signupSchema,
+  loginSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+} from "../domain/schemas/auth.schema";
 import * as authService from "../services/auth.service";
 import { env } from "../env";
 
@@ -44,6 +49,37 @@ export async function login(req: Request, res: Response, next: NextFunction) {
       accessToken: result.accessToken,
       user: result.user,
     });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function forgotPassword(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const input = forgotPasswordSchema.parse(req.body);
+    await authService.requestPasswordReset(input.email);
+    res.status(200).json({
+      message:
+        "If an account with that email exists, a reset link has been sent.",
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+export async function resetPassword(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) {
+  try {
+    const input = resetPasswordSchema.parse(req.body);
+    await authService.resetPassword(input.token, input.password);
+    res.status(200).json({ message: "Password has been reset successfully." });
   } catch (err) {
     next(err);
   }

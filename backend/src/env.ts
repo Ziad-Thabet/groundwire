@@ -20,6 +20,7 @@ const envSchema = z.object({
     .default("true")
     .transform((val) => val === "true"),
   CORS_ORIGIN: z.string().default("http://localhost:5173"),
+  FRONTEND_URL: z.string().default("http://localhost:5173"),
   STRIPE_SECRET_KEY: z.string().optional(),
   STRIPE_WEBHOOK_SECRET: z.string().optional(),
   ANTHROPIC_API_KEY: z.string().optional(),

@@ -23,3 +23,42 @@ export async function createUser(
 ): Promise<User> {
   return client.user.create({ data });
 }
+
+export async function setPasswordResetToken(
+  userId: string,
+  tokenHash: string,
+  expiresAt: Date,
+  client: Client = prisma,
+): Promise<void> {
+  await client.user.update({
+    where: { id: userId },
+    data: {
+      passwordResetTokenHash: tokenHash,
+      passwordResetExpiresAt: expiresAt,
+    },
+  });
+}
+
+export async function findUserByResetTokenHash(
+  tokenHash: string,
+  client: Client = prisma,
+): Promise<User | null> {
+  return client.user.findFirst({
+    where: { passwordResetTokenHash: tokenHash },
+  });
+}
+
+export async function resetUserPassword(
+  userId: string,
+  passwordHash: string,
+  client: Client = prisma,
+): Promise<void> {
+  await client.user.update({
+    where: { id: userId },
+    data: {
+      passwordHash,
+      passwordResetTokenHash: null,
+      passwordResetExpiresAt: null,
+    },
+  });
+}
