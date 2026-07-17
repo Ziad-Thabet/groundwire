@@ -1,8 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { MemberRole } from "@prisma/client";
 import { withTenantContext } from "../db/withTenantContext";
-import { UnauthorizedError } from "../utils/errors";
-
+import { UnauthorizedError, ForbiddenError } from "../utils/errors";
 declare module "express-serve-static-core" {
   interface Request {
     workspaceId?: string;
@@ -33,9 +32,7 @@ export async function requireWorkspaceMember(
     );
 
     if (!membership) {
-      return next(
-        new UnauthorizedError("You are not a member of this workspace"),
-      );
+      return next(new ForbiddenError("You are not a member of this workspace"));
     }
 
     req.workspaceId = workspaceId;

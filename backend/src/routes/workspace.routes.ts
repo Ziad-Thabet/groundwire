@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { requireAuth } from "../middleware/requireAuth";
 import { requireWorkspaceMember } from "../middleware/requireWorkspaceMember";
-import { listMembers } from "../controllers/workspace.controller";
+import { requireRole } from "../middleware/requireRole";
+import { listMembers, removeMember } from "../controllers/workspace.controller";
 
 const router = Router({ mergeParams: true });
 
@@ -10,6 +11,14 @@ router.get(
   requireAuth,
   requireWorkspaceMember,
   listMembers,
+);
+
+router.delete(
+  "/:workspaceId/members/:userId",
+  requireAuth,
+  requireWorkspaceMember,
+  requireRole("owner", "admin"),
+  removeMember,
 );
 
 export default router;
