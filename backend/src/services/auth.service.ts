@@ -16,9 +16,14 @@ import {
   hashPasswordResetToken,
   getPasswordResetExpiry,
 } from "../utils/passwordReset";
-import { ConflictError, UnauthorizedError } from "../utils/errors";
+import { ConflictError, UnauthorizedError, LockedOutError } from "../utils/errors";
 import { SignupInput, LoginInput } from "../domain/schemas/auth.schema";
 import { emailProvider } from "../config/emailProvider";
+import {
+  getLockoutRemainingSeconds,
+  recordFailedAttempt,
+  clearFailedAttempts,
+} from "../utils/accountLockout";
 import { env } from "../env";
 
 async function issueTokens(userId: string) {
@@ -70,18 +75,27 @@ export async function signup(input: SignupInput) {
   };
 }
 
-export async function login(input: LoginInput) {
+export async function login(input: LoginInput, ip: string) {
   const email = normalizeEmail(input.email);
+
+  const lockoutRemaining = await getLockoutRemainingSeconds(email, ip);
+  if (lockoutRemaining !== null) {
+    throw new LockedOutError(lockoutRemaining);
+  }
 
   const user = await findUserByEmail(email);
   if (!user || user.deletedAt) {
+    await recordFailedAttempt(email, ip);
     throw new UnauthorizedError("Invalid email or password");
   }
 
   const isValid = await verifyPassword(input.password, user.passwordHash);
   if (!isValid) {
+    await recordFailedAttempt(email, ip);
     throw new UnauthorizedError("Invalid email or password");
   }
+
+  await clearFailedAttempts(email, ip);
 
   const tokens = await issueTokens(user.id);
 

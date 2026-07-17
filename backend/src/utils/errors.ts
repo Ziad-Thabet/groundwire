@@ -32,3 +32,15 @@ export class NotFoundError extends AppError {
     super(message, 404);
   }
 }
+
+export class LockedOutError extends AppError {
+  retryAfterSeconds: number;
+
+  constructor(retryAfterSeconds: number) {
+    super(
+      "Too many failed login attempts. Please try again later.",
+      429,
+    );
+    this.retryAfterSeconds = retryAfterSeconds;
+  }
+}
