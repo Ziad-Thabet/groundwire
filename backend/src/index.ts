@@ -6,6 +6,7 @@ import authRoutes from "./routes/auth.routes";
 import workspaceRoutes from "./routes/workspace.routes";
 import inviteRoutes from "./routes/invite.routes";
 import { errorHandler } from "./middleware/errorHandler";
+import "./jobs/processors/documentIngestion.processor";
 
 const app = express();
 app.set("trust proxy", 1);

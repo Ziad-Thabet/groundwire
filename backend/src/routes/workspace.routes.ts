@@ -7,6 +7,8 @@ import {
   removeMember,
 } from "../controllers/workspace.controller";
 import { createInvite } from "../controllers/invite.controller";
+import { uploadDocument } from "../controllers/document.controller";
+import { upload } from "../middleware/upload";
 
 const router = Router({ mergeParams: true });
 
@@ -31,6 +33,14 @@ router.post(
   requireWorkspaceMember,
   requireRole("owner", "admin"),
   createInvite,
+);
+
+router.post(
+  "/:workspaceId/documents",
+  requireAuth,
+  requireWorkspaceMember,
+  upload.single("file"),
+  uploadDocument,
 );
 
 export default router;
