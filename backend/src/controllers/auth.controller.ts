@@ -11,7 +11,7 @@ import { env } from "../env";
 const REFRESH_COOKIE_NAME = "refreshToken";
 const REFRESH_COOKIE_PATH = "/api/auth";
 
-function setRefreshCookie(res: Response, refreshToken: string) {
+export function setRefreshCookie(res: Response, refreshToken: string) {
   res.cookie(REFRESH_COOKIE_NAME, refreshToken, {
     httpOnly: true,
     secure: env.COOKIE_SECURE,

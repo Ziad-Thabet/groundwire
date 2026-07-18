@@ -44,3 +44,9 @@ export class LockedOutError extends AppError {
     this.retryAfterSeconds = retryAfterSeconds;
   }
 }
+
+export class ValidationError extends AppError {
+  constructor(message = "Invalid request") {
+    super(message, 400);
+  }
+}
