@@ -209,13 +209,16 @@ model Invite {
   id          String       @id @default(uuid())
   workspaceId String       @map("workspace_id")
   email       String
+  role        MemberRole
   token       String       @unique
   expiresAt   DateTime     @map("expires_at")
   status      InviteStatus @default(pending)
+  createdAt   DateTime     @default(now()) @map("created_at")
 
   workspace Workspace @relation(fields: [workspaceId], references: [id])
 
   @@index([workspaceId])
+  @@index([workspaceId, email])
   @@map("invites")
 }
 

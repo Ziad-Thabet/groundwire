@@ -26,7 +26,7 @@ import {
 } from "../utils/accountLockout";
 import { env } from "../env";
 
-async function issueTokens(userId: string) {
+export async function issueTokens(userId: string) {
   const accessToken = signAccessToken(userId);
   const rawRefreshToken = generateRefreshToken();
   const tokenHash = hashRefreshToken(rawRefreshToken);
