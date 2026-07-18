@@ -98,6 +98,8 @@ model Document {
   uploadedBy  String         @map("uploaded_by")
   filename    String
   fileHash    String         @map("file_hash")
+  storagePath String         @map("storage_path")
+  mimeType    String         @map("mime_type")
   status      DocumentStatus @default(processing)
   failReason  String?        @map("fail_reason")
   pageCount   Int?           @map("page_count")
