@@ -11,11 +11,20 @@ const UPLOAD_DIR = path.resolve(process.cwd(), "uploads");
  * not work across multiple backend instances. Swap for a real
  * IFileStorage implementation (S3, Cloudflare R2, etc.) before production.
  */
+function sanitizeExtension(filename: string): string {
+  const ext = path.extname(filename);
+  // Allowlist: a dot followed by 1-10 alphanumeric characters only.
+  // Rejects anything containing path separators, dots, or other
+  // characters that could be used to escape the upload directory.
+  const match = /^\.[a-zA-Z0-9]{1,10}$/.exec(ext);
+  return match ? match[0] : "";
+}
+
 export class LocalFileStorage implements IFileStorage {
   async save(buffer: Buffer, filename: string): Promise<SavedFile> {
     await fs.mkdir(UPLOAD_DIR, { recursive: true });
 
-    const ext = path.extname(filename);
+    const ext = sanitizeExtension(filename);
     const uniqueName = `${crypto.randomUUID()}${ext}`;
     const storagePath = path.join(UPLOAD_DIR, uniqueName);
 

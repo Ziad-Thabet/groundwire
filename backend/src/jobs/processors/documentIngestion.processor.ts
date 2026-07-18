@@ -21,8 +21,9 @@ documentIngestionWorker.on("completed", (job) => {
 });
 
 documentIngestionWorker.on("failed", (job, err) => {
-  console.error(
-    `[DocumentIngestion] Job ${job?.id} failed (document ${job?.data.documentId}):`,
-    err.message,
-  );
+  console.error("[DocumentIngestion] Job failed", {
+    jobId: job?.id,
+    documentId: job?.data.documentId,
+    error: err.message,
+  });
 });
