@@ -10,20 +10,35 @@ import {
 } from "../repositories/documentChunk.repository";
 import { fileStorage } from "../config/fileStorage";
 import { embeddingProvider } from "../config/embeddingProvider";
-import { extractText } from "../providers/parsers/textExtraction";
+import {
+  extractText,
+  PermanentExtractionError,
+} from "../providers/parsers/textExtraction";
 import { chunkText } from "../utils/chunking";
 import { documentIngestionQueue } from "../jobs/queues/documentIngestion.queue";
-import { NotFoundError } from "../utils/errors";
+import { ConflictError, NotFoundError } from "../utils/errors";
+import { findDocumentByHash } from "../repositories/document.repository";
 
 export async function uploadDocument(
   workspaceId: string,
   uploadedBy: string,
   file: { buffer: Buffer; originalname: string; mimetype: string },
+  options: { confirmDuplicate?: boolean } = {},
 ) {
   const fileHash = crypto
     .createHash("sha256")
     .update(file.buffer)
     .digest("hex");
+
+  if (!options.confirmDuplicate) {
+    const existing = await findDocumentByHash(workspaceId, fileHash);
+    if (existing) {
+      throw new ConflictError(
+        "A document with identical content already exists in this workspace. " +
+          "Resubmit with confirmDuplicate to upload anyway.",
+      );
+    }
+  }
 
   const { storagePath } = await fileStorage.save(
     file.buffer,
@@ -64,7 +79,8 @@ export async function processDocument(documentId: string): Promise<void> {
     if (!text || text.trim().length === 0) {
       await updateDocumentStatus(documentId, {
         status: "failed",
-        failReason: "No extractable text found — OCR not supported in this version.",
+        failReason:
+          "No extractable text found — OCR not supported in this version.",
       });
       return;
     }
@@ -89,10 +105,20 @@ export async function processDocument(documentId: string): Promise<void> {
       pageCount,
     });
   } catch (err) {
+    const failReason =
+      err instanceof Error ? err.message : "Unknown processing error";
+
     await updateDocumentStatus(documentId, {
       status: "failed",
-      failReason: err instanceof Error ? err.message : "Unknown processing error",
+      failReason,
     });
+
+    if (err instanceof PermanentExtractionError) {
+      // Doomed to fail identically every time -- don't let BullMQ burn
+      // its 3 retry attempts on it.
+      return;
+    }
+
     throw err;
   }
 }
