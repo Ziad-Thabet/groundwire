@@ -103,6 +103,7 @@ export async function processDocument(documentId: string): Promise<void> {
     await updateDocumentStatus(documentId, {
       status: "ready",
       pageCount,
+      failReason: null,
     });
   } catch (err) {
     const failReason =
