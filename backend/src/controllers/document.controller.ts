@@ -12,6 +12,8 @@ export async function uploadDocument(
       throw new ValidationError("No file was uploaded.");
     }
 
+    const confirmDuplicate = req.body?.confirmDuplicate === "true";
+
     const document = await documentService.uploadDocument(
       req.workspaceId!,
       req.userId!,
@@ -20,6 +22,7 @@ export async function uploadDocument(
         originalname: req.file.originalname,
         mimetype: req.file.mimetype,
       },
+      { confirmDuplicate },
     );
 
     res.status(201).json({
