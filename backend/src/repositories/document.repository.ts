@@ -36,7 +36,11 @@ export async function findDocumentByHash(
 
 export async function updateDocumentStatus(
   id: string,
-  data: { status: DocumentStatus; failReason?: string; pageCount?: number },
+  data: {
+    status: DocumentStatus;
+    failReason?: string | null;
+    pageCount?: number;
+  },
   client: Client = prisma,
 ): Promise<Document> {
   return client.document.update({
