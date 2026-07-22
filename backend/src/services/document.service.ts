@@ -18,6 +18,7 @@ import { chunkText } from "../utils/chunking";
 import { documentIngestionQueue } from "../jobs/queues/documentIngestion.queue";
 import { ConflictError, NotFoundError } from "../utils/errors";
 import { findDocumentByHash } from "../repositories/document.repository";
+import { validateFileContent } from "../utils/fileContentValidation";
 
 export async function uploadDocument(
   workspaceId: string,
@@ -39,6 +40,8 @@ export async function uploadDocument(
       );
     }
   }
+
+  await validateFileContent(file.buffer, file.mimetype);
 
   const { storagePath } = await fileStorage.save(
     file.buffer,
